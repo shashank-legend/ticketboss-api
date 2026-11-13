@@ -6,6 +6,10 @@ module.exports = {
   MAX_SEATS_PER_RESERVATION: 10,
   MIN_SEATS_PER_RESERVATION: 1,
   MAX_PARTNER_ID_LENGTH: 100,
+  MAX_EVENT_SEATS: 100000,
+
+  // How many times to retry a reservation after an optimistic-lock version conflict
+  MAX_RESERVATION_RETRIES: 30,
   
   // Status codes
   STATUS: {
@@ -20,6 +24,7 @@ module.exports = {
     CREATED: 201,
     BAD_REQUEST: 400,
     NOT_FOUND: 404,
+    GONE: 410,
     CONFLICT: 409,
     INTERNAL_SERVER_ERROR: 500
   },
@@ -29,6 +34,9 @@ module.exports = {
     EVENT_NOT_FOUND: 'Event not found',
     NOT_ENOUGH_SEATS: 'Not enough seats left',
     RESERVATION_CONFLICT: 'Reservation conflict. Please try again.',
-    INVALID_INPUT: 'Invalid input parameters'
+    INVALID_INPUT: 'Invalid input parameters',
+    EVENT_EXISTS: 'An event with this ID already exists',
+    RESERVATION_NOT_FOUND: 'Reservation not found',
+    ALREADY_CANCELLED: 'Reservation is already cancelled'
   }
 };

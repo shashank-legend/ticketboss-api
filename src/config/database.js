@@ -1,40 +1,35 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-// Create PostgreSQL connection pool
-const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'ticketboss',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD,
-  max: 20, // Maximum number of connections in the pool
-  idleTimeoutMillis: 30000, // Close idle connections after 30 seconds
-  connectionTimeoutMillis: 5000, // Fail after 5 seconds if no connection available
-});
+// Hosted providers (Render, Railway, Neon, Supabase...) give a single DATABASE_URL.
+// Locally, the individual DB_* variables are used instead.
+const useSsl =
+  process.env.DB_SSL === 'true' ||
+  (process.env.DB_SSL !== 'false' && process.env.NODE_ENV === 'production' && !!process.env.DATABASE_URL);
 
-// Event handlers for connection pool
-pool.on('connect', () => {
-  console.log('✓ Database connection established');
+const connection = process.env.DATABASE_URL
+  ? { connectionString: process.env.DATABASE_URL }
+  : {
+      host: process.env.DB_HOST || 'localhost',
+      port: process.env.DB_PORT || 5432,
+      database: process.env.DB_NAME || 'ticketboss',
+      user: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD,
+    };
+
+const pool = new Pool({
+  ...connection,
+  ssl: useSsl ? { rejectUnauthorized: false } : undefined,
+  max: Number(process.env.DB_POOL_MAX) || 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
 });
 
 pool.on('error', (err) => {
   console.error('Unexpected database error:', err);
-  // Don't exit in test environment
   if (process.env.NODE_ENV !== 'test') {
     process.exit(-1);
   }
 });
-
-// Test database connection on startup (only in non-test environment)
-if (process.env.NODE_ENV !== 'test') {
-  pool.query('SELECT NOW()', (err, res) => {
-    if (err) {
-      console.error('✗ Database connection failed:', err.message);
-    } else {
-      console.log('✓ Database connection test successful');
-    }
-  });
-}
 
 module.exports = pool;
